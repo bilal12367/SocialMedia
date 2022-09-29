@@ -5,12 +5,16 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 const handler = async (req, res) => {
   const { email, password } = req.body;
+  if (mongoose.connection.readyState == 0) {
+    await connectDB();
+  }
   try {
     const user = await User.findOne({ email: email });
     if (user) {
       const isMatch = await user.comparePassword(password);
       if (isMatch) {
-        await user.refreshToken();
+        await user.generateTokens();
+        const user1 = await user.save();
         res.status(200).json({ token: user.token });
       } else {
         res

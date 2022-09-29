@@ -31,6 +31,10 @@ const UserSchema = mongoose.Schema({
     type: String,
     trim: true,
   },
+  refreshToken: {
+    type: String,
+    trim: true,
+  },
   image: {
     type: mongoose.Types.ObjectId,
     ref: "files",
@@ -38,18 +42,40 @@ const UserSchema = mongoose.Schema({
 });
 
 UserSchema.pre("save", async function () {
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  this.token = jwt.sign({ id: this._id }, process.env.SECRET_KEY, {
-    expiresIn: 1200,
-  });
+  if (this.token == undefined) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    this.token = jwt.sign({ id: this._id }, process.env.SECRET_KEY, {
+      expiresIn: process.env.SECRET_LIFETIME,
+    });
+    this.refreshToken = jwt.sign({ id: this._id }, process.env.REFRESH_KEY, {
+      expiresIn: process.env.REFRESH_LIFETIME,
+    });
+  }
 });
 
-UserSchema.methods.refreshToken = function () {
-  this.token = jwt.sign({ id: this._id }, process.env.SECRET_KEY, {
-    expiresIn: 1200,
+UserSchema.methods.refToken = function () {
+  try {
+    jwt.verify(this.refreshToken, process.env.REFRESH_KEY);
+    this.token = jwt.sign({ id: this._id }, process.env.SECRET_KEY, {
+      expiresIn: process.env.SECRET_LIFETIME,
+    });
+    return { token: this.token };
+  } catch (error) {
+    return {
+      error: "TokenExpired",
+      message: "Refresh Token Expired re-login again.",
+    };
+  }
+};
+
+UserSchema.methods.generateTokens = function () {
+  this.refreshToken = jwt.sign({ id: this._id }, process.env.REFRESH_KEY, {
+    expiresIn: process.env.REFRESH_LIFETIME,
   });
-  return this.token;
+  this.token = jwt.sign({ id: this._id }, process.env.SECRET_KEY, {
+    expiresIn: process.env.SECRET_LIFETIME,
+  });
 };
 
 UserSchema.methods.comparePassword = async function (password) {

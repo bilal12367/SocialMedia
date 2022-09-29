@@ -5,7 +5,10 @@ const nextConfig = {
   env: {
     PORT: 3000,
     SECRET_KEY: 'MIICXQIBAAKBgQCP54SyxMgwYb3f33oX1rQnP/0PxkjMXTUxSmM2ucVdwvVFc2KE',
-    MONGO_URI: 'mongodb+srv://bilal-1236:m4cabrine@cluster0.pz7cw.mongodb.net/socialmedia?retryWrites=true&w=majority'
+    REFRESH_KEY: '7x!A%D*G-KaPdSgVkYp3s6v8y/B?E(H+MbQeThWmZq4t7w!z$C&F)J@NcRfUjXn2r5u8x/A?D*G-KaPdSgVkYp3s6v9y$B&E)H+MbQeThWmZq4t7w!z%C*F-JaNcRfUj',
+    SECRET_LIFETIME: 300,
+    REFRESH_LIFETIME: '90d',
+    MONGO_TEST: 'mongodb://localhost:27017'
   }
 }
 
