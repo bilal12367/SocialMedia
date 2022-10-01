@@ -3,6 +3,7 @@ import authMiddleware from "./middleware/authMiddleware";
 import User from "../../models/User";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { setCookie } from "cookies-next";
 const handler = async (req, res) => {
   const { email, password } = req.body;
   if (mongoose.connection.readyState == 0) {
@@ -15,7 +16,12 @@ const handler = async (req, res) => {
       if (isMatch) {
         await user.generateTokens();
         const user1 = await user.save();
-        res.status(200).json({ token: user.token });
+        setCookie("c_user", user.token, {
+          req,
+          res,
+          maxAge: 60 * 60 * 24 * 70,
+        });
+        res.status(200).json({ message: "User Logged In Successfully..." });
       } else {
         res
           .status(401)

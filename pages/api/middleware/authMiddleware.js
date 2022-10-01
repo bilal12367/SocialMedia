@@ -6,8 +6,8 @@ const authMiddleware = (handler) => {
   return async (req, res) => {
     const token1 = getCookie("c_user", { req, res });
     await connectDB();
-    if (req.body.token) {
-      const token = req.body.token;
+    if (token1) {
+      const token = token1;
       try {
         const data = jwt.verify(token, process.env.SECRET_KEY);
         return handler(req, res);
@@ -20,7 +20,7 @@ const authMiddleware = (handler) => {
           await user.save();
           if (res1.token) {
             var newToken = res1.token;
-            setCookie("c_user", newToken, { req, res, maxAge: 60 * 60 * 24 });
+            setCookie("c_user", newToken, { req, res, maxAge: 300 });
             return handler(req, res);
           } else {
             // Refresh Token Expired. Relogin Page.
