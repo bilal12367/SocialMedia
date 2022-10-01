@@ -1,25 +1,27 @@
 import jwt from "jsonwebtoken";
 import User from "../../../models/User";
 import connectDB from "../../../utils/mongoConnect";
+import { getCookie, setCookie } from "cookies-next";
 const authMiddleware = (handler) => {
   return async (req, res) => {
+    const token1 = getCookie("c_user", { req, res });
     await connectDB();
     if (req.body.token) {
       const token = req.body.token;
       try {
         const data = jwt.verify(token, process.env.SECRET_KEY);
-        return handler(req,res);
+        return handler(req, res);
       } catch (error) {
         // Token Expired
         const decode = jwt.decode(token, process.env.SECRET_KEY);
-        console.log('decode :>> ', decode);
         const user = await User.findOne({ _id: decode.id });
         if (user && user.token == token) {
           const res1 = await user.refToken();
           await user.save();
           if (res1.token) {
             var newToken = res1.token;
-            return handler(req, res, newToken);
+            setCookie("c_user", newToken, { req, res, maxAge: 60 * 60 * 24 });
+            return handler(req, res);
           } else {
             // Refresh Token Expired. Relogin Page.
             res.json({ error: res1 });
@@ -32,14 +34,14 @@ const authMiddleware = (handler) => {
           }
         } else {
           // Hacker
-          res.status(401).json({ 
+          res.status(401).json({
             error: "Unauthorized",
-            message: "Expired Token Used."
-           });
+            message: "Expired Token Used.",
+          });
         }
       }
     } else {
-      res.status(401).json({ err: "UnAuthorized", message: "Missing Token" });
+      res.status(401).json({ err: "UnAuthorized", message: "Missing Token." });
     }
   };
 };
